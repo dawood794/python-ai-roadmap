@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusAI Pro SaaS</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #0b0e14; color: #e2e8f0; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* AUTH CONTAINER STYLE */
+        .auth-container { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100vw; height: 100vh; background: linear-gradient(135deg, #0f172a 0%, #020617 100%); }
+        .auth-card { background: rgba(30, 41, 59, 0.7); padding: 2.5rem; border-radius: 16px; border: 1px solid #334155; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .auth-card h1 { color: #00ffcc; margin-bottom: 1.5rem; font-size: 2rem; }
+        .auth-card input { width: 100%; padding: 0.75rem; margin-bottom: 1rem; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: white; outline: none; }
+        .auth-card button { width: 100%; padding: 0.75rem; border: none; border-radius: 8px; background: #00ffcc; color: #020617; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.2s; }
+        .auth-card button:hover { background: #00cca3; }
+        .toggle-link { margin-top: 1rem; color: #94a3b8; font-size: 0.9rem; cursor: pointer; }
+        .error-msg { color: #ef4444; margin-bottom: 1rem; font-size: 0.9rem; }
+        .success-msg { color: #10b981; margin-bottom: 1rem; font-size: 0.9rem; }
+
+        /* DASHBOARD GRID SYSTEM */
+        .dashboard { display: grid; grid-template-columns: 260px 1fr; width: 100%; height: 100vh; }
+        .sidebar { background-color: #111827; border-right: 1px solid #1f2937; display: flex; flex-direction: column; padding: 1rem; justify-content: space-between; height: 100%; }
+        .main-chat { display: flex; flex-direction: column; background-color: #0b0e14; height: 100%; overflow: hidden; }
+        
+        .logo-area { color: #00ffcc; font-size: 1.4rem; font-weight: bold; margin-bottom: 2rem; display: flex; align-items: center; gap: 10px; }
+        .history-list { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .history-item { padding: 0.75rem; background: #1f2937; border-radius: 8px; font-size: 0.9rem; cursor: pointer; transition: 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-left: 3px solid transparent; }
+        .history-item:hover { background: #374151; border-left-color: #00ffcc; }
+        
+        .user-profile { padding: 1rem 0 0 0; border-top: 1px solid #1f2937; }
+        .logout-btn { color: #9ca3af; text-decoration: none; font-size: 0.85rem; display: inline-block; margin-top: 5px; }
+        .logout-btn:hover { color: #ef4444; }
+
+        /* CHAT BOX CONTAINER WITH EXCELLENT SCROLLING Properties */
+        .chat-container { flex-grow: 1; overflow-y: auto; padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; max-height: calc(100vh - 100px); }
+        .chat-bubble { display: flex; gap: 1rem; max-width: 80%; padding: 1rem; border-radius: 12px; font-size: 1rem; line-height: 1.5; word-wrap: break-word; }
+        .chat-bubble.user { background-color: #1f2937; align-self: flex-end; color: white; border-bottom-right-radius: 2px; }
+        .chat-bubble.assistant { background-color: #111827; align-self: flex-start; color: #e2e8f0; border-bottom-left-radius: 2px; border: 1px solid #1f2937; }
+        
+        .input-area { padding: 1.5rem; background: #0b0e14; display: flex; justify-content: center; }
+        .input-wrapper { width: 100%; max-width: 768px; display: flex; gap: 10px; background: #1f2937; padding: 6px; border-radius: 24px; border: 1px solid #374151; }
+        .input-wrapper input { flex-grow: 1; background: transparent; border: none; padding: 0.75rem 1rem; color: white; font-size: 1rem; outline: none; }
+        .input-wrapper button { background: #00ffcc; color: #020617; border: none; width: 40px; height: 40px; border-radius: 50%; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .input-wrapper button:hover { background: #00cca3; transform: scale(1.05); }
+    </style>
+</head>
+<body>
+
+    {% if page == "login" %}
+    <div class="auth-container">
+        <div class="auth-card">
+            <h1 id="auth-title">⚡ NexusAI Login</h1>
+            
+            {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+            {% if msg %}<div class="success-msg">{{ msg }}</div>{% endif %}
+
+            <form id="auth-form" action="/auth/login" method="POST">
+                <input type="email" name="email" placeholder="Enter your email" required>
+                <input type="password" name="password" placeholder="Enter secure password" required>
+                <button type="submit" id="auth-btn">Access Engine</button>
+            </form>
+            
+            <div class="toggle-link" id="auth-toggle" onclick="toggleAuthMode()">New Creator? Create an Account</div>
+        </div>
+    </div>
+
+    <script>
+        function toggleAuthMode() {
+            const form = document.getElementById('auth-form');
+            const title = document.getElementById('auth-title');
+            const btn = document.getElementById('auth-btn');
+            const toggle = document.getElementById('auth-toggle');
+
+            if (form.action.endsWith('/auth/login')) {
+                form.action = '/auth/signup';
+                title.innerText = '⚡ NexusAI Registration';
+                btn.innerText = 'Register Developer Profile';
+                toggle.innerText = 'Already have an account? Log In';
+            } else {
+                form.action = '/auth/login';
+                title.innerText = '⚡ NexusAI Login';
+                btn.innerText = 'Access Engine';
+                toggle.innerText = 'New Creator? Create an Account';
+            }
+        }
+    </script>
+
+    {% elif page == "dashboard" %}
+    <div class="dashboard">
+        <div class="sidebar">
+            <div>
+                <div class="logo-area">🤖 NexusAI Engine</div>
+                <div class="history-list" id="sidebar-history">
+                    <div class="history-item">💬 Coding Assistant Profile</div>
+                    <div class="history-item">💬 Roblox Update Sandbox</div>
+                </div>
+            </div>
+            
+            <div class="user-profile">
+                <div style="font-size: 0.9rem; color: white; font-weight: 600;">{{ user.email }}</div>
+                <div style="font-size: 0.75rem; color: #00ffcc;">Tier: Developer Mode</div>
+                <a href="/auth/logout" class="logout-btn">↳ Logout Securely</a>
+            </div>
+        </div>
+
+        <div class="main-chat">
+            <div class="chat-container" id="chat-box">
+                <div class="chat-bubble assistant">
+                    Welcome to your professional SaaS workspace. Your database and authentication controls are operational. How can I help you build today?
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <input type="text" id="user-input" placeholder="Message Nexus..." onkeypress="handleKeyPress(event)">
+                    <button onclick="sendChatMessage()">➔</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function sendChatMessage() {
+            const inputField = document.getElementById('user-input');
+            const chatBox = document.getElementById('chat-box');
+            const prompt = inputField.value.trim();
+            if (!prompt) return;
+
+            chatBox.innerHTML += `<div class="chat-bubble user">${prompt}</div>`;
+            inputField.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            const aiBubbleId = 'ai-' + Date.now();
+            chatBox.innerHTML += `<div class="chat-bubble assistant" id="${aiBubbleId}">Nexus is thinking... 🧠</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const response = await fetch(`/api/chat?prompt=${encodeURIComponent(prompt)}`);
+                const data = await response.json();
+                document.getElementById(aiBubbleId).innerText = data.response;
+            } catch (error) {
+                document.getElementById(aiBubbleId).innerText = "Backend Connection Error.";
+            }
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') sendChatMessage();
+        }
+    </script>
+    {% endif %}
+
+</body>
+</html>
